@@ -1,0 +1,141 @@
+Úloha pre uchádzača o pracovnú pozíciu: Embedded programátor
+09/2021
+
+1. Vytvor na githube projekt. 
+	Volá sa "", linka: 
+	
+2. Vytvor C++ program, ktorý bude robiť následovné:
+
+ program pri spustení zoberie string flag ( amd64/armv7E )
+
+	1. na príkazovom riadku v tvare "-amd64" resp. "-armv7E" ? Budem tak ďalej predpokladať, hoci by mohlo byť aj
+		v premennej prostredia či zo štandardného vstupu príp. inak; resp bez úvodného "-" (amd64 resp. armv7E)
+		alebo naopak s dvoma ("--amd64" resp. "--armv7E")...
+	
+ na základe flagu si program vytvorí pri štarte všetky potrebné nastavenia podľa
+definície danej architektúry
+
+	1. cize v pripade odlisneho spravania pre tieto architektury budu musiet existovat obe cesty (kódu), keďže pri kompilácii
+		nie je známe/rozhodnuté, ktorá bude použitá
+		
+ vytvorí dynamický alokovaný buffer o veľkosti 400 integerov 
+
+	1. Otázka je, či na to možno použiť std:vector<>.
+	Na embedded zariadeniach by to mohlo byť náročné na veľkosť generovaného kódu, ale zase je to bezpečnejšie
+		z hľadiska použitia princípu RAII - automatického "upratania" (pri vystúpení z kontextu/bloku či už prirodzene alebo v dôsledku výnimky;
+		hoci v tejto aplikácii na tom asi nezáleží; a v embedded vývoji sa výnimky asi často nepoužívajú/obchádzajú).
+	
+ naplň buffer pseudonáhodne generovanými číslami, (bez použitia knižnice rand)
+
+	1. Asi sa tým myslelo širšie - bez použitia štandardných knižníc C++ (napr. cez #include <random>) aj iných knižníc tretej strany.
+
+ vytvor objekt typu class, ktorý bude mať 2 statické funkcie, ktorých návratová
+hodnota bude definovaná ako integer
+	
+	1. Tu sa hádam myslí "objekt" v zmysle konštruktu v zdrojovom texte,
+		nie inštanciu daného typu (popisovanej triedy) v pamäti programu (počas jeho behu)...
+		Predpokladám tak ďalej - t.j. nevytváram inštanciu tej triedy v programe.
+	2. Ďalšia vec je, či predmetná trieda môže mať ďalšie (prípadne tiež statické) metódy
+		alebo môže mať iba vyššie-explicitne-spomenuté dve... či "ktorý bude mať (práve) dve statické funkcie..."
+		alebo "ktorý bude mať (aj) dve statické funkcie..."
+	3. Vo formulácii "ktorých návratová hodnota bude definovaná ako integer" pojem "integer" značí presne/akurát
+		typ "int" alebo to môže byť niektorý jeho variant
+			ako napr. {[unsigned|signed] {[|short|long|long long] int, char}, [u]int{8,16,32,64}_t, ...}
+		
+o prvá statická funkcia sa bude volať get parsed binary (pri menovaní dodrž c++
+menovaciu štruktúru) a jej parametrom bude jeden byte zapísaný ako
+bezznamienkový 1 bajtový integer. Funkcia vráti počet bitov, ktoré sú
+nastavené na 1. Kód funkcie treba urobiť čo najjednoduchšie.
+
+	1. Pomenovacia konvencia (a celkovo "štýl" kódovania) - pokiaľ viem - pre C++ nie je jednoznačne definovaný,
+		ale sú viaceré výrazné "prúdy" (treba uvážiť napr. aj Microsoft, Google apod.)... vybral som si jeden.
+	2. "Kód funkcie treba urobiť čo najjednoduchšie" asi znamená vyhnúť sa aj použitiu tabuliek v pamäti
+	(spracovaniu po skupinách bitov) aj intrinsicom (neportabilným konštruktom efektívnym pre špecifické architektúry,
+		hoci sa tieto v embedded programovaní často môžu hodiť).
+
+o Druhá funkcia zoberie ako vstup 2 bajty a na výstup vráti 16 bitový
+bezznamienkový integer, ktorý tvoria dané 2 bajty a je celý bitovo posunutý o 1000 doprava;
+
+	1. Nie je jasné, či tie 2 vstupné bajty sú odovzdané ako 2 osobitné 1-bajtové parametre predmetnej funkcie
+		alebo prípadne môžu byť časťami jedného 2-bajtového parametra. Formulácia naznačuje prvú možnosť, ale je otázka,
+		či je to "vyžadované"; a tiež nie je daná sémantika parametrov (v poradí) - či by išlo o poradie v pamäti
+		alebo o "význam" rádov (napr. 1. parameter: nižšie rády)...
+	2. Číslo 1000 môže znamenať tisíc (dekadicky) alebo šestnásť (v binárnom zápise) alebo ešte niečo iné (hexadecimálne, oktálne) apod.
+	3. Nie je explicitne uvedené, o 1000 čoho je to celé bitovo posunuté doprava...
+		ponúka sa (a so značnou pravdepodobnosťou bolo myslené) "bitov", ale celkom isté to nie je.
+	4. Ak sú tie 2 bajty o toľko posunuté doprava, je otázka, či je použitie slova "tvoriť" namieste... (viď formulácia)
+		Predpoklám, že ide o dekadickú hodnotu, ale pre všetky také možnosti všetky bity výsledku takými posunmi stanú nulové.
+	5. Ak by nešlo o taký veľký posun, záležalo by na tom, ako ho "tvoria" (či za sebou, v tom prípade v akom poradí - big/little endian),
+		Podobne by bolo potrebné písať kód (v ktorom by sa to muselo nejako riešiť), ak by táto funkcia mala byť parametrizovateľná (veľkosťou bitového posunu).
+	6. Otázka je, či kód funkcie može byť optimalizovaný pre dané hodoty parametrov alebo skôr byť potenciálne použiteľný
+	    aj pre iné hodnoty parametrov (napr. iné ako 1000). V riešení predpokladám prvú spomenutú možnosť.
+	7. Nejednoznačnosť zadania sa dá brať aj ako jeho "voľnosť" za zachovania obhájiteľnosti zvoleného postupu,
+		hoci to by som bral ako "záložnú" možnosť - najprv by bolo lepšie zistiť, aké sú "skutočné" požiadavky.
+
+ V maine programu zavoláte vytvorené funkcie. Ako vstup im dá daný buffer
+náhodných čísel. Výsledok sa zapíše do súboru binárne v tvare:
+0xAA 0xBB 0x01 VSTUPNY_BAJT_FUNKCIE_1 0xFF VYSTUPNY_BAJT_FUNKCIE_1 0x02 
+VSTUPNY_BAJT_FUNKCIE_1 VSTUPNY_BAJT_FUNKCIE_2 0xFF
+VYSTUPNY_BAJT_FUNKCIE_1 VYSTUPNY_BAJT_FUNKCIE_2 CRC_16 ... opakovane pre
+každý bajt vo vygenerovanom náhodnom poli.
+VSTUPNY_BAJT_FUNKCIE_1 - je bajt, ktorý je na vstupe funkcie
+VYSTUPNY_BAJT_FUNKCIE_1 - je bajt na výstupe funkcie
+CRC_16 - Modbus crc 16 bitové, pozícia bajtov je na základe vstupného flagu
+programu.
+
+	1. Formulácia "v maine programu" by mohla nastoľovať požiadavku, aby sa tieto funkcie volali (iba) priamo z funkcie main().
+		T.j. aby sa nevolali cez ďalšiu funkciu - napr. by z main() bola volaná funkcia processBuffer(...) a tá by volala predtým popísané funkcie.
+		Predpokladám ďalej radšej (napr. aj vzhľadom ku požiadavke štýlu dobrého OOP návrhu apod; a silnej vhodnosti oddelenia
+		funkcionality cyklu aplikácie funkcií na prvky postupnosti a tiež oddelenia generovania pseudonáhodných čísel a tiež počítania CRC16),
+		že o takúto požiadavku nešlo
+	2. Nejasnosť s podobným významom: Pod označením "vytvorené funkcie" by sa mohli myslieť buď iba dve explicitne opísané vyššie v texte
+		alebo ľubovoľné vytvorené (a ponechané) v rámci riešenia úlohy.
+	3. V prípade prvej funkcie sa označenia VSTUPNY_BAJT_FUNKCIE_1 a VYSTUPNY_BAJT_FUNKCIE_1 na typ jej vstupného parametra
+		a výstupnej hodnoty dobre mapujú.
+		Ale v prípade druhej popísanej funkcie to tak nie je - pri nej sa explicitne píše:
+			"zoberie ako vstup 2 bajty a na výstup vráti 16 bitový bezznamienkový integer".
+		Ako sa na to majú namapovať VSTUPNY_BAJT_FUNKCIE_2 a VYSTUPNY_BAJT_FUNKCIE_2?
+		Tieto posledné označenia ani nie sú bližšie popísané, kým pri VSTUPNY_BAJT_FUNKCIE_1 a VYSTUPNY_BAJT_FUNKCIE_1 sa o to urobil aspoň pokus.
+		Ak by sa namiesto VSTUPNY_BAJT_FUNKCIE_2 a VYSTUPNY_BAJT_FUNKCIE_2 pouzili nazvy VSTUPNA_HODNOTA_FUNKCIE_2 a VYSTUPNA_HODNOTA_FUNKCIE_2
+			(alebo napr. VSTUPNE_WORD_FUNKCIE_2 a VYSTUPNE_WORD_FUNKCIE_2), bolo by to vsetko ovela "krajsie" - napr. aj velkost zaznamu by bola 16 bajtov,
+			bolo by "viac priestoru" na uplatnenie poradia bajtov v slove atd.
+		Takto vznika rozpor, ci sa drzat nazvu alebo funkcnosti...
+	4. Nejasné, prečo sa rozlišujú VSTUPNY_BAJT_FUNKCIE_1 a VSTUPNY_BAJT_FUNKCIE_2.
+		Ak by mali byť tie isté, nebolo by potrebné ich rozlišovať, ak by nemali byť tie isté,
+			bolo by vhodné mať popísané, ako majú byť zo vstupnej postupnosti určované. Celkove:
+	5. Vôbec nie je určené, akým spôsobom (sa) "im dá daný buffer náhodných čísel"! Takých spôsobov sa v princípe ponúka viacero,
+		napr.: (5a) každý prvok postupnosti sa použije (aj "spotrebuje") ako vstup do jednej aj druhej funkcie,
+			pričom v druhej funkcii sa rozšíri na 16 bitov (aj tu je viac možností, ako),
+		(5b) prvky postupnosti sa používajú (a spotrebúvajú) po dvojiciach, prvý z dvojice je vstupom do 1. funkcie, druhý do 2. funkcie (zase s rozšírením),
+		(5c) prvky postupnosti sa používajú (a spotrebúvajú) po trojiciach, prvý z trojice je vstupom do 1. funkcie, druhý a tretí do 2. funkcie, posledná trojica sa zahodí alebo doplní nulou alebo zopakuje posledný prvok...,
+		(ďalšie) napr. sa spotrebúvajú/posúvajú po menej ako použitý počet prvkov, použijú sa všetky dvojice prvkov (nie len bezprostredne nasledujúce) apod.
+	6. Nie je určené, z čoho sa CRC16 počíta. Dá sa predpokladať, že iba z obsahu daného záznamu pred samotnou jeho hodnotou, ale jasné to nie je
+	7. Nie je explicitne určené, či sa CRC16 ukladá ako 1 bajt (všetky ostatné položky boli 8-bitové, niekto by mohol uvažovať aj takto)
+		respektíve, v akom poradí sa jeho 2 bajty ukladajú. V rámci tejto druhej možnosti by jedna alternatíva mohla byť určená architektúrou určenou vstupným parametrom programu,
+		druhá alternatíva by mohla byť považovať ho za Modbus CRC16 a urobiť to podľa Modbus pravidiel (big endian - podľa
+			https://modbus.org/docs/Modbus_over_serial_line_V1_02.pdf , tam 2.5.1.2, 4. odstavec.
+		Urobím to podľa posledne popísaného spôsobu.
+	8. Je tu rozpor 
+
+ Ostatnú štruktúru programu navrhni ako uznáš za vhodné za predpokladu dodržania
+princípov OOP. 
+
+	1. Možno sa skôr myslelo na princípy "dobrého návrhu (a kódovania)" (či "dobrého OOP návrhu a kódovania)...
+		ale tie tu pri dodržaní uvedených požiadaviek (či snahu o to aj pri ich náznakoch) už nie je veľmi kde uplatniť.
+		Jedine azda v objekte pseudonáhodného generátora, ale neriešil som to nakoniec.
+	(Navyše ich vývoj v čase a závislosť na názoroch, prioritách a znalostiach/zručnostiach - subjektivite - posudzovateľa...)
+	2. Túto požiadavku zohľadním uplatnením niektorých svojich pohľadov v rámci neurčitosti zadania.
+	3. Neriešim tam kontroly a ochrany ohľadom možnosti pretečenia počítadiel cez rozsah typu int.
+	4. Dalo by sa to urob
+
+3. Daný program nahraj do githubu do branchu master.
+4. V Pythone napíš script, ktorý spustí daný c++ program a skontroluje jeho výstup. Pri správnosti
+výstupu vygeneruje hlášku OK, ináč hlášku CHYBA.
+
+	1. Tu nastáva do istej miery otázka možnosti rozhodnutia o správnosti výstupu (splnení požiadaviek zadania).
+		Na jednej strane tu vstupuje neurčitosť zadania, ktoré bolo pre účel dodania výstupu "doplnené riešiteľom".
+			Správnosť toho doplnenia je otázna. Dalo by sa cez to "prekročiť" s tým, že sa toto "doplnenie" stalo "pracovne"
+				(pre účel vytvorenia kontrolného programu) súčasťou zadania (definície správnosti výstupu).
+		Ďalej niektoré vlastnosti výstupu rozumne spoľahlivo skontrolovať nejdú (napr. pseudonáhodnosť čísel zdrojovej postupnosti).
+
+5. Pošli nám link na github projekt s vypracovanou úlohou.
